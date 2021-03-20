@@ -1,6 +1,6 @@
 ---
 author: "Ryan Scehovic"
-title: "team"
+title: "DS 202 - Lab 4"
 output: html_document
 ---
 
@@ -9,7 +9,6 @@ knitr::opts_chunk$set(echo = TRUE)
 library(dplyr)
 library(readxl)
 library(tidyverse)
-
 ```
 
 Part 1 - Number 1
@@ -76,7 +75,6 @@ ggplot(offCleanW, aes(x=Oklahoma, y= Oregon))+geom_point()+xlim(0,100)+ylim(0,10
 
 Defense was better again Oklahoma because players had higher receiving yards when playing them and less against Oregon.
 
-
 Part 2 - Number 4
 ```{r}
 bioClean <- separate(bioClean, Hometown, c('City', 'State'), sep=', ')
@@ -89,7 +87,6 @@ n5 <- table(bioClean$State)
 n5 <- data.frame(rbind(n5))
 n5
 ```
-
 
 Part 3- Number 1
 ```{r}
