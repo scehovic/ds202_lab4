@@ -130,3 +130,5 @@ ggplot(offenseBothYears, aes(x=Name, y=difference))+ geom_bar(stat = "identity")
   facet_wrap(~stat, scales = 'free')+ ggtitle("Stat Averages (2019 - 2020)") + 
   theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjus=0.5, size = rel(0.7)))
 ```
+
+Breece Hall looks like he imrpoved the most from 2019 to 2020 because you can see his difference in stats from the 2019 season to the 2020 season is the biggest of all players. You can see him compared to other players and no one else is close in Rushing_ATT/TD/YARDS. 
