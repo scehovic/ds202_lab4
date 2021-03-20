@@ -1,1 +1,135 @@
+---
+author: "Ryan Scehovic"
+title: "team"
+output: html_document
+---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(readxl)
+library(tidyverse)
+
+```
+
+Part 1 - Number 1
+```{r}
+offense <- read_excel('../ds202_lab4/cyclonesFootball2020.xlsx', sheet='Offensive')
+defense <- read_excel('../ds202_lab4/cyclonesFootball2020.xlsx', sheet='Defensive')
+biography <- read_excel('../ds202_lab4/cyclonesFootball2020.xlsx', sheet='Biography')
+head(offense)
+head(defense)
+head(biography)
+
+offense <- rename(offense, 'Opponent'='Opponent_Opponent')
+defense <- rename(defense, 'Opponent'='Opponent_Opponent')
+
+offense$Opponent <- as.factor(offense$Opponent)
+defense$Opponent <- as.factor(defense$Opponent)
+
+offense$Name <- as.factor(offense$Name)
+defense$Name <- as.factor(defense$Name)
+
+biography$Name <- as.factor(biography$Name)
+```
+
+Part 1 - Number 2
+```{r}
+offense <- offense %>% mutate(across(Receiving_REC:Passing_INT, as.numeric))
+defense <- defense %>% mutate(across(Tackles_Solo:Pass_PB, as.numeric))
+str(offense)
+str(defense)
+
+defClean <- defense
+offClean <- offense
+```
+
+Part 1 - Number 3
+```{r}
+biography <- separate(biography, Height, c('Feet', 'Inches'), sep='-')
+biography <- biography %>% mutate(across(Feet:Weight, as.numeric))
+bioClean <- biography
+str(biography)
+```
+
+Part 2 - Number 1
+```{r}
+offClean1 <- offClean %>% pivot_longer(Receiving_REC:Passing_INT,names_to = 'stat',values_to = 'value' )
+offClean2 <- drop_na(offClean1)
+```
+
+Part 2 - Number 2
+```{r}
+offClean2$stat <- as.factor(offClean2$stat)
+ggplot(offClean2, aes(x=value))+geom_histogram(bins = 15)+facet_wrap(~ stat, scales = 'free')+ggtitle("Team Stats")
+```
+
+Looking at the graphs above, Passing_INT and passing_TD both have a mean of 0, both are skewed to the right, passing_INT is more skewed to the right though. I also see a lot of players with 0 passing yards and only a few that have have than a 100. This is likely due to there only being a few starting wide recivers and some that rotate in and out, so there isn't enough playing time to have a lot of wide receivers get a lot of time. They only play the best ones. 
+
+Part 2 - Number 3
+```{r}
+offCleanW<- offClean2 %>% filter(stat == "Receiving_YDS" & ( Opponent == "Oklahoma" | Opponent == "Oregon")) %>% pivot_wider(names_from='Opponent',values_from="value", values_fn=mean) 
+ 
+head(offCleanW)
+ggplot(offCleanW, aes(x=Oklahoma, y= Oregon))+geom_point()+xlim(0,100)+ylim(0,100)+ggtitle("Player Receiving Yards (Oklahoma vs. Oregon)")
+```
+
+Defense was better again Oklahoma because players had higher receiving yards when playing them and less against Oregon.
+
+
+Part 2 - Number 4
+```{r}
+bioClean <- separate(bioClean, Hometown, c('City', 'State'), sep=', ')
+head(bioClean[7:8], 5)
+```
+
+Part 2 - Number 5
+```{r}
+n5 <- table(bioClean$State)
+n5 <- data.frame(rbind(n5))
+n5
+```
+
+
+Part 3- Number 1
+```{r}
+homeCount <- n5 %>% pivot_longer(Ariz.:Wis., names_to='State', values_to='Count') %>% arrange(desc(Count))
+homeCount
+ggplot(bioClean, aes(x=`State`)) + geom_bar() + theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjus=.5))+ggtitle("Players per State")
+```
+
+Part 3- Number 2
+```{r}
+Brock <- offClean2 %>% filter(Name == "Purdy, Brock")
+str(Brock)
+ggplot(Brock, aes(x=value))+geom_histogram(bins = 15)+facet_wrap(~ stat, scales = 'free')+ggtitle("Brock Purdy Statistics")
+```
+
+The graph above shows how Brock Purdy influences and contributes to stats like interceptions, passing/rushing touchdowns, passing yards, rushing attempts/yards. 
+
+```{r}
+ggplot(offClean2, aes(x=value, fill=Name=="Purdy, Brock"))+geom_histogram(bins = 15)+facet_wrap(~ stat, scales = 'free')+ggtitle("Team Stats with Brock Purdy")
+```
+
+The graph aboves shows that Brock Purdy has a big influence on how the overall ofense does. A bad game from him could mean a bad game for the offense. This is seen in stats like passing yards, touchdowns, and rushing yards, where Purdy is important. 
+
+Part 3- Number 3
+```{r}
+offense2019 <- read_excel('../ds202_lab4/cyclonesFootball2019.xlsx', sheet='Offensive')
+offense2019 <- rename(offense2019, 'Opponent'='Opponent_Opponent')
+offense2019$Opponent <- as.factor(offense2019$Opponent)
+offense2019$Name <- as.factor(offense2019$Name)
+offense2019 <- offense2019 %>% mutate(across(Rushing_ATT:Passing_INT, as.numeric))
+offClean2019 <- offense2019
+offenseClean2019_219 <- offClean2019 %>% pivot_longer(Rushing_ATT:Passing_INT, names_to = 'stat',values_to = 'value' )
+offClean2019_2 <- drop_na(offenseClean2019_219)
+offenseAvg <- offClean2 %>% group_by(Name, stat)%>% summarise_at(vars(value), list(avg2020 = mean))
+offenseAvg2019 <- offClean2019_2 %>% group_by(Name, stat)%>% summarise_at(vars(value), list(avg2019 = mean))  
+offenseBothYears <- offenseAvg %>% left_join(offenseAvg2019, by=c('Name', 'stat')) %>%
+  drop_na() %>% mutate(difference = avg2020 - avg2019) %>% mutate(improved = difference>0)
+head(offenseBothYears, 5)
+
+ggplot(offenseBothYears, aes(x=Name, y=difference))+ geom_bar(stat = "identity")+ 
+  facet_wrap(~stat, scales = 'free')+ ggtitle("Stat Averages (2019 - 2020)") + 
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjus=0.5, size = rel(0.7)))
+```
